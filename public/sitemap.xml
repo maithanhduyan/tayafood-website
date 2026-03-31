@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Homepage - Vietnamese -->
+  <url>
+    <loc>https://tayafood.com/vi/</loc>
+    <lastmod>2026-02-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://tayafood.com/vi/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tayafood.com/en/" />
+  </url>
+
+  <!-- Homepage - English -->
+  <url>
+    <loc>https://tayafood.com/en/</loc>
+    <lastmod>2026-02-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://tayafood.com/vi/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tayafood.com/en/" />
+  </url>
+
+  <!-- Privacy Policy - Vietnamese -->
+  <url>
+    <loc>https://tayafood.com/vi/chinh-sach-bao-mat/</loc>
+    <lastmod>2026-02-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://tayafood.com/vi/chinh-sach-bao-mat/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tayafood.com/en/chinh-sach-bao-mat/" />
+  </url>
+
+  <!-- Privacy Policy - English -->
+  <url>
+    <loc>https://tayafood.com/en/chinh-sach-bao-mat/</loc>
+    <lastmod>2026-02-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://tayafood.com/vi/chinh-sach-bao-mat/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tayafood.com/en/chinh-sach-bao-mat/" />
+  </url>
+
+  <!-- Terms of Service - Vietnamese -->
+  <url>
+    <loc>https://tayafood.com/vi/dieu-khoan-su-dung/</loc>
+    <lastmod>2026-02-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://tayafood.com/vi/dieu-khoan-su-dung/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tayafood.com/en/dieu-khoan-su-dung/" />
+  </url>
+
+  <!-- Terms of Service - English -->
+  <url>
+    <loc>https://tayafood.com/en/dieu-khoan-su-dung/</loc>
+    <lastmod>2026-02-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://tayafood.com/vi/dieu-khoan-su-dung/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tayafood.com/en/dieu-khoan-su-dung/" />
+  </url>
+
+</urlset>

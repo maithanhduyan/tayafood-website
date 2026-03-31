@@ -1,0 +1,14 @@
+{
+  "name": "Taya Food",
+  "short_name": "TayaFood",
+  "description": "Nhà sản xuất OEM/ODM gia vị & nước chấm",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "theme_color": "#D71920",
+  "background_color": "#ffffff"
+}
