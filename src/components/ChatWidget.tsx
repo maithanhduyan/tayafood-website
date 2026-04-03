@@ -3,11 +3,36 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import type { Dictionary } from "@/i18n";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const ODOO_URL = process.env.NEXT_PUBLIC_ODOO_URL || "";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+}
+
+/** Suggested action buttons returned by the AI */
+interface SendResponse {
+  response: string;
+  products?: ProductCard[];
+  suggested_actions?: string[];
+  visitor_name?: string;
+  visitor_email?: string;
+  visitor_phone?: string;
+  lead_created?: boolean;
+  coupon?: string;
+  tokens_used?: number;
+  response_time_ms?: number;
+  error?: string;
+}
+
+interface ProductCard {
+  id: number;
+  name: string;
+  price: string;
+  image: string;
+  url: string;
+  saleable: boolean;
+  availability_label: string;
 }
 
 /* ── Lightweight markdown → HTML (no deps) ──────────────────────────── */
@@ -49,13 +74,13 @@ function renderMarkdown(md: string): string {
   return result.join("");
 }
 
-/* ── Fingerprint ────────────────────────────────────────────────────── */
-function generateFingerprint(): string {
-  const stored = localStorage.getItem("taya_fp");
+/* ── Visitor UID ─────────────────────────────────────────────────────── */
+function getVisitorUid(): string {
+  const stored = localStorage.getItem("taya_visitor_uid");
   if (stored) return stored;
-  const fp = crypto.randomUUID();
-  localStorage.setItem("taya_fp", fp);
-  return fp;
+  const uid = "v_" + Date.now().toString(36) + "_" + crypto.randomUUID().slice(0, 8);
+  localStorage.setItem("taya_visitor_uid", uid);
+  return uid;
 }
 
 /* ── Saved visitor context ──────────────────────────────────────────── */
@@ -84,45 +109,111 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<number | null>(null);
+  const [suggestedActions, setSuggestedActions] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const visitorCtx = useMemo(() => loadVisitorContext(), []);
+  const initRef = useRef(false);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  const sendMessage = async () => {
-    const text = input.trim();
-    if (!text || loading) return;
-
-    setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: text }]);
-    setLoading(true);
-
+  /* Init session when chat opens for the first time */
+  const initSession = async () => {
+    if (initRef.current) return;
+    initRef.current = true;
     try {
-      const ctx = loadVisitorContext();
-      const res = await fetch(`${API_URL}/api/v1/chat`, {
+      const res = await fetch(`${ODOO_URL}/api/v1/chat/init`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fingerprint: generateFingerprint(),
-          message: text,
+          visitor_uid: getVisitorUid(),
+          page_url: window.location.href,
           session_id: sessionId,
-          visitor_name: ctx.name || undefined,
-          visitor_email: ctx.email || undefined,
-          visitor_phone: ctx.phone || undefined,
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.session_id) setSessionId(data.session_id);
+      if (data.visitor_name || data.visitor_email || data.visitor_phone) {
+        saveVisitorContext({
+          name: data.visitor_name || undefined,
+          email: data.visitor_email || undefined,
+          phone: data.visitor_phone || undefined,
+        });
+      }
+      // Restore previous messages
+      if (data.messages?.length) {
+        setMessages(
+          data.messages.map((m: { role: string; content: string }) => ({
+            role: m.role === "visitor" ? "user" : "assistant",
+            content: m.content,
+          }))
+        );
+      }
+    } catch {
+      // silent — widget still works, will init on first send
+    }
+  };
+
+  const handleOpen = () => {
+    setOpen(true);
+    initSession();
+  };
+
+  const sendMessage = async (text?: string) => {
+    const msg = (text ?? input).trim();
+    if (!msg || loading) return;
+
+    setInput("");
+    setSuggestedActions([]);
+    setMessages((prev) => [...prev, { role: "user", content: msg }]);
+    setLoading(true);
+
+    try {
+      // Ensure session exists
+      let sid = sessionId;
+      if (!sid) {
+        const initRes = await fetch(`${ODOO_URL}/api/v1/chat/init`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            visitor_uid: getVisitorUid(),
+            page_url: window.location.href,
+          }),
+        });
+        if (initRes.ok) {
+          const initData = await initRes.json();
+          sid = initData.session_id;
+          setSessionId(sid);
+        }
+      }
+
+      if (!sid) throw new Error("No session");
+
+      const res = await fetch(`${ODOO_URL}/api/v1/chat/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sid,
+          message: msg,
+          visitor_uid: getVisitorUid(),
         }),
       });
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data: SendResponse = await res.json();
+
+      if (data.error) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: t.chat.errorReply },
+        ]);
+        return;
       }
 
-      const data = await res.json();
-
-      if (data.session_id) setSessionId(data.session_id);
-
-      // Save any visitor info returned by the API (AI-extracted)
+      // Save visitor info returned by AI
       if (data.visitor_name || data.visitor_email || data.visitor_phone) {
         saveVisitorContext({
           name: data.visitor_name || undefined,
@@ -131,14 +222,14 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
         });
       }
 
+      // Set suggested actions
+      if (data.suggested_actions?.length) {
+        setSuggestedActions(data.suggested_actions);
+      }
+
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: data.error
-            ? (data.rate_limited ? t.chat.errorRate : t.chat.errorReply)
-            : data.message,
-        },
+        { role: "assistant", content: data.response },
       ]);
     } catch {
       setMessages((prev) => [
@@ -154,7 +245,7 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
     <>
       {/* FAB — left side */}
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => (open ? setOpen(false) : handleOpen())}
         className={`fixed left-5 bottom-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#D71920] text-white shadow-lg transition-all duration-300 hover:bg-[#b9151b] hover:scale-110 ${open ? "rotate-0" : "animate-bounce-slow"}`}
         aria-label={t.chat.ariaLabel}
       >
@@ -227,6 +318,21 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
             </div>
           )}
         </div>
+
+        {/* Suggested actions */}
+        {suggestedActions.length > 0 && !loading && (
+          <div className="flex flex-wrap gap-1.5 border-t px-3 py-2">
+            {suggestedActions.map((action, i) => (
+              <button
+                key={i}
+                onClick={() => sendMessage(action)}
+                className="rounded-full border border-[#D71920] px-3 py-1 text-xs text-[#D71920] transition hover:bg-[#D71920] hover:text-white"
+              >
+                {action}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Input */}
         <form
