@@ -45,9 +45,27 @@ interface ProductCard {
   availability_label: string;
 }
 
+/* ── Strip [ACTIONS] blocks from AI response ───────────────────────── */
+const ACTIONS_RE = /\[ACTIONS\].*?\[\/?ACTIONS\]/gs;
+const ACTIONS_INCOMPLETE_RE = /\[ACTIONS\][\s\S]*$/g;
+
+function stripActions(text: string): string {
+  return text.replace(ACTIONS_RE, "").replace(ACTIONS_INCOMPLETE_RE, "").trim();
+}
+
+function extractActions(text: string): string[] {
+  const match = text.match(/\[ACTIONS\](.+?)\[\/?ACTIONS\]/s);
+  if (!match) return [];
+  try {
+    const parsed = JSON.parse(match[1].trim());
+    if (Array.isArray(parsed)) return parsed.map(String);
+  } catch { /* ignore parse errors */ }
+  return [];
+}
+
 /* ── Lightweight markdown → HTML (no deps) ──────────────────────────── */
 function renderMarkdown(md: string): string {
-  let html = md
+  let html = stripActions(md)
     // escape HTML entities
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -154,12 +172,17 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
       }
       // Restore previous messages
       if (data.messages?.length) {
-        setMessages(
-          data.messages.map((m: { role: string; content: string }) => ({
-            role: m.role === "visitor" ? "user" : "assistant",
-            content: m.content,
-          }))
-        );
+        const restored = data.messages.map((m: { role: string; content: string }) => ({
+          role: m.role === "visitor" ? "user" : "assistant" as const,
+          content: m.content,
+        }));
+        setMessages(restored);
+        // Extract suggested actions from last assistant message
+        const lastAssistant = [...restored].reverse().find((m: Message) => m.role === "assistant");
+        if (lastAssistant) {
+          const actions = extractActions(lastAssistant.content);
+          if (actions.length) setSuggestedActions(actions);
+        }
       }
     } catch {
       // silent — widget still works, will init on first send
