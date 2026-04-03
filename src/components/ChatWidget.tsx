@@ -46,7 +46,7 @@ interface ProductCard {
 }
 
 /* ── Strip [ACTIONS] blocks from AI response ───────────────────────── */
-const ACTIONS_RE = /\[ACTIONS\].*?\[\/?ACTIONS\]/gs;
+const ACTIONS_RE = /\[ACTIONS\][\s\S]*?\[\/?ACTIONS\]/g;
 const ACTIONS_INCOMPLETE_RE = /\[ACTIONS\][\s\S]*$/g;
 
 function stripActions(text: string): string {
