@@ -1,15 +1,18 @@
 "use client";
 
+// Chat widget for Taya Food website
+
 import { useState, useRef, useEffect, useMemo } from "react";
 import type { Dictionary } from "@/i18n";
 
 const ODOO_URL = process.env.NEXT_PUBLIC_ODOO_URL || "";
 const API_KEY = process.env.NEXT_PUBLIC_ODOO_CHAT_API_KEY || "";
 
+/** Use same-origin proxy (/api/chat/*) to avoid CORS, fall back to direct Odoo URL */
+const CHAT_API = ODOO_URL ? "/api/chat" : "";
+
 function apiHeaders(): Record<string, string> {
-  const h: Record<string, string> = { "Content-Type": "application/json" };
-  if (API_KEY) h["X-API-Key"] = API_KEY;
-  return h;
+  return { "Content-Type": "application/json" };
 }
 
 interface Message {
@@ -130,7 +133,7 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
     if (initRef.current) return;
     initRef.current = true;
     try {
-      const res = await fetch(`${ODOO_URL}/api/v1/chat/init`, {
+      const res = await fetch(`${CHAT_API}/init`, {
         method: "POST",
         headers: apiHeaders(),
         body: JSON.stringify({
@@ -181,7 +184,7 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
       // Ensure session exists
       let sid = sessionId;
       if (!sid) {
-        const initRes = await fetch(`${ODOO_URL}/api/v1/chat/init`, {
+        const initRes = await fetch(`${CHAT_API}/init`, {
           method: "POST",
           headers: apiHeaders(),
           body: JSON.stringify({
@@ -198,7 +201,7 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
 
       if (!sid) throw new Error("No session");
 
-      const res = await fetch(`${ODOO_URL}/api/v1/chat/send`, {
+      const res = await fetch(`${CHAT_API}/send`, {
         method: "POST",
         headers: apiHeaders(),
         body: JSON.stringify({
