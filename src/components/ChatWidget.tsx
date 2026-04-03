@@ -54,7 +54,7 @@ function stripActions(text: string): string {
 }
 
 function extractActions(text: string): string[] {
-  const match = text.match(/\[ACTIONS\](.+?)\[\/?ACTIONS\]/s);
+  const match = text.match(/\[ACTIONS\]([\s\S]+?)\[\/?ACTIONS\]/);
   if (!match) return [];
   try {
     const parsed = JSON.parse(match[1].trim());
