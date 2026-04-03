@@ -4,6 +4,13 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import type { Dictionary } from "@/i18n";
 
 const ODOO_URL = process.env.NEXT_PUBLIC_ODOO_URL || "";
+const API_KEY = process.env.NEXT_PUBLIC_ODOO_CHAT_API_KEY || "";
+
+function apiHeaders(): Record<string, string> {
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (API_KEY) h["X-API-Key"] = API_KEY;
+  return h;
+}
 
 interface Message {
   role: "user" | "assistant";
@@ -125,7 +132,7 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
     try {
       const res = await fetch(`${ODOO_URL}/api/v1/chat/init`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders(),
         body: JSON.stringify({
           visitor_uid: getVisitorUid(),
           page_url: window.location.href,
@@ -176,7 +183,7 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
       if (!sid) {
         const initRes = await fetch(`${ODOO_URL}/api/v1/chat/init`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: apiHeaders(),
           body: JSON.stringify({
             visitor_uid: getVisitorUid(),
             page_url: window.location.href,
@@ -193,7 +200,7 @@ export default function ChatWidget({ t }: { t: Dictionary }) {
 
       const res = await fetch(`${ODOO_URL}/api/v1/chat/send`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: apiHeaders(),
         body: JSON.stringify({
           session_id: sid,
           message: msg,
