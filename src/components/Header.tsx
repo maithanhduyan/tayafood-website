@@ -19,12 +19,13 @@ export default function Header({ locale, t }: HeaderProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const home = `/${locale}`;
   const NAV_ITEMS = [
-    { label: t.nav.about, href: "#about" },
-    { label: t.nav.products, href: "#products" },
-    { label: t.nav.process, href: "#process" },
-    { label: t.nav.partnership, href: "#pricing" },
-    { label: t.nav.contact, href: "#contact" },
+    { label: t.nav.about, href: `${home}#about` },
+    { label: t.nav.products, href: `${home}#products` },
+    { label: t.nav.process, href: `${home}#process` },
+    { label: t.nav.partnership, href: `${home}#pricing` },
+    { label: t.nav.contact, href: `${home}#contact` },
   ];
 
   const otherLocale = locale === "vi" ? "en" : "vi";
@@ -40,7 +41,7 @@ export default function Header({ locale, t }: HeaderProps) {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:h-20">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2">
+        <a href={home} className="flex items-center gap-2">
           <img src="/logo.svg" alt="TAYAFOOD" className="h-12 w-auto md:h-14" />
         </a>
 
@@ -73,7 +74,7 @@ export default function Header({ locale, t }: HeaderProps) {
               {localeLabel}
             </a>
             <a
-              href="#contact"
+              href={`${home}#contact`}
               className="rounded-lg bg-[#D71920] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-500/20 transition hover:bg-[#b9151b] hover:shadow-lg hover:shadow-red-500/30"
             >
               {t.nav.cta}
@@ -131,7 +132,7 @@ export default function Header({ locale, t }: HeaderProps) {
               {localeLabel}
             </a>
             <a
-              href="#contact"
+              href={`${home}#contact`}
               onClick={() => setOpen(false)}
               className="flex-1 rounded-lg bg-[#D71920] py-2.5 text-center text-sm font-semibold text-white"
             >
